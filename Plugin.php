@@ -9,6 +9,8 @@ class Plugin extends Base
 {
     public function initialize()
     {
+        $this->template->hook->attach('template:dashboard:page-header:menu', 'TrelloJSON2Kanboard:dashboard/menu');
+        $this->template->hook->attach('template:header:creation-dropdown', 'TrelloJSON2Kanboard:dashboard/menu');
     }
 
     public function onStartup()
