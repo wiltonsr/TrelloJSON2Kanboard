@@ -38,32 +38,36 @@ class TrelloJSON2KanboardController extends BaseController
         } else {
             $jsonObj = json_decode(file_get_contents($filename));
 
-            $values += array('name' => $jsonObj->name);
+            if (is_null($jsonObj)) {
+                $this->create($values, array('file' => array(t('Invalid JSON file.'))));
+            } else {
+                $values += array('name' => $jsonObj->name);
 
-            //creating the project
-            $project_id = $this->createNewProject($values);
+                //creating the project
+                $project_id = $this->createNewProject($values);
 
-            if ($project_id > 0) {
-                //remove the columns created by default
-                $initial_columns = $this->columnModel->getAll($project_id);
-                foreach ($initial_columns as $column) {
-                    $this->columnModel->remove($column['id']);
-                }
-
-                //getting columns from JSON file
-                foreach ($jsonObj->lists as $list) {
-                    if ($list->closed) {
-                        // ignore archived lists
-                        continue;
+                if ($project_id > 0) {
+                    //remove the columns created by default
+                    $initial_columns = $this->columnModel->getAll($project_id);
+                    foreach ($initial_columns as $column) {
+                        $this->columnModel->remove($column['id']);
                     }
-                    $this->columnModel->create($project_id, $list->name, 0, $list->desc, 0);
+
+                    //getting columns from JSON file
+                    foreach ($jsonObj->lists as $list) {
+                        if ($list->closed) {
+                            // ignore archived lists
+                            continue;
+                        }
+                        $this->columnModel->create($project_id, $list->name, 0, $list->desc, 0);
+                    }
+
+                    $this->flash->success(t('Your project have been imported successfully.'));
+                    return $this->response->redirect($this->helper->url->to('ProjectViewController', 'show', array('project_id' => $project_id)));
                 }
 
-                $this->flash->success(t('Your project have been imported successfully.'));
-                return $this->response->redirect($this->helper->url->to('ProjectViewController', 'show', array('project_id' => $project_id)));
+                $this->flash->failure(t('Unable to import your project.'));
             }
-
-            $this->flash->failure(t('Unable to import your project.'));
         }
     }
 
