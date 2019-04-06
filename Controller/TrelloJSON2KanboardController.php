@@ -36,13 +36,29 @@ class TrelloJSON2KanboardController extends BaseController
         if (!file_exists($filename)) {
             $this->create($values, array('file' => array(t('Please select a JSON file.'))));
         } else {
-            $jsonObj = json_decode(file_get_contents($filename), true);
+            $jsonObj = json_decode(file_get_contents($filename));
 
-            $values += array('name' => $jsonObj['name']);
+            $values += array('name' => $jsonObj->name);
 
+            //creating the project
             $project_id = $this->createNewProject($values);
 
             if ($project_id > 0) {
+                //remove the columns created by default
+                $initial_columns = $this->columnModel->getAll($project_id);
+                foreach ($initial_columns as $column) {
+                    $this->columnModel->remove($column['id']);
+                }
+
+                //getting columns from JSON file
+                foreach ($jsonObj->lists as $list) {
+                    if ($list->closed) {
+                        // ignore archived lists
+                        continue;
+                    }
+                    $this->columnModel->create($project_id, $list->name, 0, $list->desc, 0);
+                }
+
                 $this->flash->success(t('Your project have been imported successfully.'));
                 return $this->response->redirect($this->helper->url->to('ProjectViewController', 'show', array('project_id' => $project_id)));
             }
