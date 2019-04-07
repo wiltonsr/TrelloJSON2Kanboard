@@ -56,10 +56,68 @@ class TrelloJSON2KanboardController extends BaseController
                     //getting columns from JSON file
                     foreach ($jsonObj->lists as $list) {
                         if ($list->closed) {
-                            // ignore archived lists
+                            //ignore archived lists
                             continue;
                         }
-                        $this->columnModel->create($project_id, $list->name, 0, $list->desc, 0);
+                        //creating column
+                        $column_id = $this->columnModel->create($project_id, $list->name, 0, $list->desc, 0);
+
+                        //getting tasks from JSON file
+                        foreach ($jsonObj->cards as $card) {
+                            if ($card->closed) {
+                                //ignore archived cards
+                                continue;
+                            }
+
+                            //only get cards that belongs to this column
+                            if ($card->idList == $list->id) {
+                                //converting trello due date to kanboard format
+                                $due_date = $card->due !== null ? date('Y-m-d H:i', strtotime($card->due)) : null;
+                                $values = array(
+                                    'title' => $card->name,
+                                    'project_id' => $project_id,
+                                    'column_id' => $column_id,
+                                    'date_due' => $due_date,
+                                    'description' => $card->desc,
+                                );
+                                //creating task
+                                $task_id = $this->taskCreationModel->create($values);
+
+                                //getting checklists from JSON file
+                                foreach ($jsonObj->checklists as $checklist) {
+                                    //only get checklists that belongs to this card
+                                    if ($checklist->idCard == $card->id) {
+                                        foreach ($checklist->checkItems as $checkitem) {
+                                            $status = $checkitem->state == 'complete' ? 2 : 0;
+                                            $values = array(
+                                                'title' => $checkitem->name,
+                                                'task_id' => $task_id,
+                                                'status' => $status,
+                                            );
+                                            //creating subtask
+                                            $subtask_id = $this->subtaskModel->create($values);
+                                        }
+                                    }
+                                }
+
+                                //getting actions from JSON file
+                                foreach ($jsonObj->actions as $action) {
+                                    //only get actions from commentCard type
+                                    if ($action->type == 'commentCard') {
+                                        //only get comments that belongs to this card
+                                        if ($action->data->card->id == $card->id) {
+                                            $values = array(
+                                                'task_id' => $task_id,
+                                                'user_id' => $this->userSession->getId(),
+                                                'comment' => $action->data->text,
+                                            );
+                                            //creating comment
+                                            $comment_id = $this->commentModel->create($values);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     $this->flash->success(t('Your project have been imported successfully.'));
