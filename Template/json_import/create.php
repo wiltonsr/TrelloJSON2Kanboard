@@ -19,15 +19,11 @@
 
 
         <div class="panel">
-            <h3><?= t('Instructions') ?></h3>
+            <h3><?= t('Observations') ?></h3>
             <ul>
-                <li><?= t('Your file must use the predefined CSV format') ?></li>
-                <li><?= t('Your file must be encoded in UTF-8') ?></li>
-                <li><?= t('The first row must be the header') ?></li>
-                <li><?= t('Duplicates are not verified for you') ?></li>
-                <li><?= t('The due date must use the ISO format: YYYY-MM-DD') ?></li>
-                <li><?= t('Tags must be separated by a comma') ?></li>
-                <li><?= t('Only the task title is required') ?></li>
+                <li><?= t('Your file must use the JSON format') ?></li>
+                <li><?= t('The JSON file must contain the keys: name, lists, cards, checklists and actions') ?></li>
+                <li><?= t('Your user will be the author of the imported comments') ?></li>
             </ul>
             <p class="margin-top">
                 <?= $this->modal->submitButtons(array('submitLabel' => t('Import'))) ?>
