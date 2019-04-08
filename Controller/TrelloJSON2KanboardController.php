@@ -14,6 +14,9 @@ class TrelloJSON2KanboardController extends BaseController
 {
     public function create(array $values = array(), array $errors = array())
     {
+        if (!isset($values['is_private'])) {
+            $values += array('is_private' => 0);
+        }
         $this->response->html($this->helper->layout->app('TrelloJSON2Kanboard:json_import/create', array(
             'values' => $values,
             'errors' => $errors,
