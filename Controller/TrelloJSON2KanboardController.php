@@ -14,6 +14,9 @@ class TrelloJSON2KanboardController extends BaseController
 {
     public function create(array $values = array(), array $errors = array())
     {
+        if (!isset($values['is_private'])) {
+            $values += array('is_private' => 0);
+        }
         $this->response->html($this->helper->layout->app('TrelloJSON2Kanboard:json_import/create', array(
             'values' => $values,
             'errors' => $errors,
@@ -60,7 +63,7 @@ class TrelloJSON2KanboardController extends BaseController
                             continue;
                         }
                         //creating column
-                        $column_id = $this->columnModel->create($project_id, $list->name, 0, $list->desc, 0);
+                        $column_id = $this->columnModel->create($project_id, $list->name, 0, '', 0);
 
                         //getting tasks from JSON file
                         foreach ($jsonObj->cards as $card) {

@@ -11,10 +11,8 @@
         <p class="form-help"><?= t('Maximum size: ') ?><?= is_integer($max_size) ? $this->text->bytes($max_size) : $max_size ?></p>
 
         <?php if ($this->app->config('disable_private_project') != 1) : ?>
-            <?php if ($this->user->hasProjectAccess('ProjectCreationController', 'create', $project['id'])) : ?>
-                <?= $this->form->checkbox('is_private', t('Public project'), 0, $values['is_private'] == 0) ?>
-                <p class="form-help"><?= t('Only public projects have users and groups management.') ?></p>
-            <?php endif ?>
+            <?= $this->form->checkbox('is_private', t('Public project'), 0, $values['is_private'] == 0) ?>
+            <p class="form-help"><?= t('Only public projects have users and groups management.') ?></p>
         <?php endif ?>
 
 
