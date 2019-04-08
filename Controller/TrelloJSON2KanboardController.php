@@ -15,7 +15,7 @@ class TrelloJSON2KanboardController extends BaseController
     public function create(array $values = array(), array $errors = array())
     {
         if (!isset($values['is_private'])) {
-            $values += array('is_private' => 0);
+            $values +=  array('is_private' => 0);
         }
         $this->response->html($this->helper->layout->app('TrelloJSON2Kanboard:json_import/create', array(
             'values' => $values,
@@ -50,7 +50,9 @@ class TrelloJSON2KanboardController extends BaseController
             if (is_null($jsonObj)) {
                 $this->create($values, array('file' => array(t('Unable to parse JSON file. Error: %s', json_last_error_msg()))));
             } else {
-                $values += array('name' => $jsonObj->name);
+                $project = $this->trelloJSON2KanboardModel->parserJSON($jsonObj);
+
+                $values += array('name' => $project->name);
 
                 $max_attachment_size = $this->helper->text->phpTobytes(get_upload_max_size());
 
@@ -65,124 +67,53 @@ class TrelloJSON2KanboardController extends BaseController
                     }
 
                     //getting columns from JSON file
-                    foreach ($jsonObj->lists as $list) {
-                        if ($list->closed) {
-                            //ignore archived lists
-                            continue;
-                        }
+                    foreach ($project->columns as $column) {
                         //creating column
-                        $column_id = $this->columnModel->create($project_id, $list->name, 0, '', 0);
+                        $column_id = $this->columnModel->create($project_id, $column->name, 0, '', 0);
 
                         //getting tasks from JSON file
-                        foreach ($jsonObj->cards as $card) {
-                            if ($card->closed) {
-                                //ignore archived cards
-                                continue;
+                        foreach ($column->tasks as $task) {
+                            //only get cards that belongs to this column
+                            $values = array(
+                                'title' => $task->name,
+                                'project_id' => $project_id,
+                                'column_id' => $column_id,
+                                'date_due' => $task->date_due,
+                                'description' => $task->desc,
+                            );
+                            //creating task
+                            $task_id = $this->taskCreationModel->create($values);
+
+                            //getting checklists from JSON file
+                            foreach ($task->subtasks as $subtask) {
+                                $values = array(
+                                    'title' => $subtask->content,
+                                    'task_id' => $task_id,
+                                    'status' => $subtask->status,
+                                );
+                                //creating subtask
+                                $subtask_id = $this->subtaskModel->create($values);
                             }
 
-                            //only get cards that belongs to this column
-                            if ($card->idList == $list->id) {
-                                //converting trello due date to kanboard format
-                                $due_date = $card->due !== null ? date('Y-m-d H:i', strtotime($card->due)) : null;
+                            foreach ($task->comments as $comment) {
+                                //only get actions from commentCard type
                                 $values = array(
-                                    'title' => $card->name,
-                                    'project_id' => $project_id,
-                                    'column_id' => $column_id,
-                                    'date_due' => $due_date,
-                                    'description' => $card->desc,
+                                    'task_id' => $task_id,
+                                    'user_id' => $this->userSession->getId(),
+                                    'comment' => $comment->content,
                                 );
-                                //creating task
-                                $task_id = $this->taskCreationModel->create($values);
-
-                                if ($card->badges->checkItems > 0) {
-                                    //getting checklists from JSON file
-                                    foreach ($jsonObj->checklists as $checklist) {
-                                        //only get checklists that belongs to this card
-                                        if ($checklist->idCard == $card->id) {
-                                            foreach ($checklist->checkItems as $checkitem) {
-                                                $status = $checkitem->state == 'complete' ? 2 : 0;
-                                                $values = array(
-                                                    'title' => $checkitem->name,
-                                                    'task_id' => $task_id,
-                                                    'status' => $status,
-                                                );
-                                                //creating subtask
-                                                $subtask_id = $this->subtaskModel->create($values);
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if ($card->badges->comments > 0) {
-                                    //getting actions from JSON file
-                                    foreach ($jsonObj->actions as $action) {
-                                        //only get actions from commentCard type
-                                        if ($action->type == 'commentCard') {
-                                            //only get comments that belongs to this card
-                                            if ($action->data->card->id == $card->id) {
-                                                $values = array(
-                                                    'task_id' => $task_id,
-                                                    'user_id' => $this->userSession->getId(),
-                                                    'comment' => $action->data->text,
-                                                );
-                                                //creating comment
-                                                $comment_id = $this->commentModel->create($values);
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if ($card->badges->attachments > 0 and $this->is_trello_connected()) {
-                                    //getting attachments from JSON file
-                                    foreach ($card->attachments as $attachment) {
-                                        $values = array(
-                                            'task_id' => $task_id,
-                                            'user_id' => $this->userSession->getId(),
-                                        );
-                                        //only get attachments that are uploaded files
-                                        if ($attachment->isUpload) {
-                                            $attachment_size = $this->retrieve_remote_file_size($attachment->url);
-
-                                            if ($attachment_size < $max_attachment_size) {
-                                                //here is the file we are downloading, replace spaces with %20
-                                                $ch = curl_init($attachment->url);
-
-                                                curl_setopt($ch, CURLOPT_TIMEOUT, 50);
-
-                                                //return file in variable
-                                                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                                                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-
-                                                $data = curl_exec($ch); //get curl response
-                                                if ($data !== false) {
-                                                    //creating attachment
-                                                    $attachment_id = $this->taskFileModel->uploadContent($task_id, $attachment->name, base64_encode($data));
-                                                }
-                                                curl_close($ch);
-                                            } else {
-                                                // cant upload attachment, add a comment with attachment link
-                                                $values += array('comment' => t('Attachment exceeds the upload limit: %s', $attachment->url));
-                                                //creating comment
-                                                $comment_id = $this->commentModel->create($values);
-                                            }
-                                        } else {
-                                            // just an url, add a comment
-                                            $values += array('comment' => t('Attachment is just a link: %s', $attachment->url));
-                                            //creating comment
-                                            $comment_id = $this->commentModel->create($values);
-                                        }
-                                    }
-                                }
+                                //creating comment
+                                $comment_id = $this->commentModel->create($values);
                             }
                         }
                     }
-
-                    $this->flash->success(t('Your project have been imported successfully.'));
-                    return $this->response->redirect($this->helper->url->to('ProjectViewController', 'show', array('project_id' => $project_id)));
                 }
 
-                $this->flash->failure(t('Unable to import your project.'));
+                $this->flash->success(t('Your project have been imported successfully.'));
+                return $this->response->redirect($this->helper->url->to('ProjectViewController', 'show', array('project_id' => $project_id)));
             }
+
+            $this->flash->failure(t('Unable to import your project.'));
         }
     }
 

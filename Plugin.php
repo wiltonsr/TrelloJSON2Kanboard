@@ -15,7 +15,16 @@ class Plugin extends Base
 
     public function onStartup()
     {
-        Translator::load($this->languageModel->getCurrentLanguage(), __DIR__.'/Locale');
+        Translator::load($this->languageModel->getCurrentLanguage(), __DIR__ . '/Locale');
+    }
+
+    public function getClasses()
+    {
+        return array(
+            'Plugin\TrelloJSON2Kanboard\Model' => array(
+                'TrelloJSON2KanboardModel',
+            )
+        );
     }
 
     public function getPluginName()
@@ -43,4 +52,3 @@ class Plugin extends Base
         return 'https://github.com/wiltonsr/TrelloJSON2Kanboard';
     }
 }
-
