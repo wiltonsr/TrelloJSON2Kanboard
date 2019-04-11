@@ -86,36 +86,40 @@ class TrelloJSON2KanboardController extends BaseController
                                 //creating task
                                 $task_id = $this->taskCreationModel->create($values);
 
-                                //getting checklists from JSON file
-                                foreach ($jsonObj->checklists as $checklist) {
-                                    //only get checklists that belongs to this card
-                                    if ($checklist->idCard == $card->id) {
-                                        foreach ($checklist->checkItems as $checkitem) {
-                                            $status = $checkitem->state == 'complete' ? 2 : 0;
-                                            $values = array(
-                                                'title' => $checkitem->name,
-                                                'task_id' => $task_id,
-                                                'status' => $status,
-                                            );
-                                            //creating subtask
-                                            $subtask_id = $this->subtaskModel->create($values);
+                                if ($card->badges->checkItems > 0) {
+                                    //getting checklists from JSON file
+                                    foreach ($jsonObj->checklists as $checklist) {
+                                        //only get checklists that belongs to this card
+                                        if ($checklist->idCard == $card->id) {
+                                            foreach ($checklist->checkItems as $checkitem) {
+                                                $status = $checkitem->state == 'complete' ? 2 : 0;
+                                                $values = array(
+                                                    'title' => $checkitem->name,
+                                                    'task_id' => $task_id,
+                                                    'status' => $status,
+                                                );
+                                                //creating subtask
+                                                $subtask_id = $this->subtaskModel->create($values);
+                                            }
                                         }
                                     }
                                 }
 
-                                //getting actions from JSON file
-                                foreach ($jsonObj->actions as $action) {
-                                    //only get actions from commentCard type
-                                    if ($action->type == 'commentCard') {
-                                        //only get comments that belongs to this card
-                                        if ($action->data->card->id == $card->id) {
-                                            $values = array(
-                                                'task_id' => $task_id,
-                                                'user_id' => $this->userSession->getId(),
-                                                'comment' => $action->data->text,
-                                            );
-                                            //creating comment
-                                            $comment_id = $this->commentModel->create($values);
+                                if ($card->badges->comments > 0) {
+                                    //getting actions from JSON file
+                                    foreach ($jsonObj->actions as $action) {
+                                        //only get actions from commentCard type
+                                        if ($action->type == 'commentCard') {
+                                            //only get comments that belongs to this card
+                                            if ($action->data->card->id == $card->id) {
+                                                $values = array(
+                                                    'task_id' => $task_id,
+                                                    'user_id' => $this->userSession->getId(),
+                                                    'comment' => $action->data->text,
+                                                );
+                                                //creating comment
+                                                $comment_id = $this->commentModel->create($values);
+                                            }
                                         }
                                     }
                                 }
