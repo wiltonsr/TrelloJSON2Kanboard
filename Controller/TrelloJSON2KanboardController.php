@@ -123,6 +123,39 @@ class TrelloJSON2KanboardController extends BaseController
                                         }
                                     }
                                 }
+
+                                if ($card->badges->attachments > 0) {
+                                    //getting attachments from JSON file
+                                    foreach ($card->attachments as $attachment) {
+                                        //only get attachments that are uploaded files
+                                        if ($attachment->isUpload) {
+                                            //here is the file we are downloading, replace spaces with %20
+                                            $ch = curl_init($attachment->url);
+
+                                            curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+
+                                            //return file in variable
+                                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                                            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+                                            $data = curl_exec($ch); //get curl response
+                                            if ($data !== false) {
+                                                //creating attachment
+                                                $attachment_id = $this->taskFileModel->uploadContent($task_id, $attachment->name, base64_encode($data));
+                                            }
+                                            curl_close($ch);
+                                        } else {
+                                            // just an url, add a comment
+                                            $values = array(
+                                                'task_id' => $task_id,
+                                                'user_id' => $this->userSession->getId(),
+                                                'comment' => $attachment->url,
+                                            );
+                                            //creating comment
+                                            $comment_id = $this->commentModel->create($values);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
