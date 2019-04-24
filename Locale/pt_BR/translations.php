@@ -14,7 +14,6 @@ return array(
     'Only public projects have users and groups management.' => 'Somente projetos públicos possuem gerenciamento de usuários e grupos.',
     'Observations' => 'Observações',
     'Your file must use the JSON format' => 'Seu arquivo deve usar o formato JSON',
-    'Your file must be encoded in UTF-8' => 'Seu arquivo deve estar codificado em UTF-8',
     'The JSON file must contain the keys: name, lists, cards, checklists and actions' => 'O arquivo JSON deve conter as chaves: name, lists, cards, checklists e actions',
     'Your user will be the author of the imported comments' => 'Seu usuário será o autor dos comentários importados',
     'Import' => 'Importar',

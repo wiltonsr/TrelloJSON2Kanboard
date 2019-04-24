@@ -20,7 +20,6 @@
             <h3><?= t('Observations') ?></h3>
             <ul>
                 <li><?= t('Your file must use the JSON format') ?></li>
-                <li><?= t('Your file must be encoded in UTF-8') ?></li>
                 <li><?= t('The JSON file must contain the keys: name, lists, cards, checklists and actions') ?></li>
                 <li><?= t('Your user will be the author of the imported comments') ?></li>
             </ul>

@@ -39,7 +39,11 @@ class TrelloJSON2KanboardController extends BaseController
         if (!file_exists($filename)) {
             $this->create($values, array('file' => array(t('Please select a JSON file.'))));
         } else {
-            $jsonObj = json_decode(file_get_contents($filename));
+            $file_content = file_get_contents($filename);
+
+            $file_content = mb_convert_encoding($file_content, 'UTF-8', 'pass');
+
+            $jsonObj = json_decode($file_content);
 
             if (is_null($jsonObj)) {
                 $this->create($values, array('file' => array(t('Unable to parse JSON file. Error: %s', json_last_error_msg()))));
