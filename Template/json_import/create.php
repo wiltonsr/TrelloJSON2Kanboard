@@ -22,6 +22,7 @@
                 <li><?= t('Your file must use the JSON format') ?></li>
                 <li><?= t('The JSON file must contain the keys: name, lists, cards, checklists and actions') ?></li>
                 <li><?= t('Your user will be the author of the imported comments') ?></li>
+                <li><?= t('Your attachments that are links will be imported as comments') ?></li>
             </ul>
             <p class="margin-top">
                 <?= $this->modal->submitButtons(array('submitLabel' => t('Import'))) ?>
