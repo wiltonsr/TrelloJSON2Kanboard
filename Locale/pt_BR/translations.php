@@ -4,6 +4,8 @@ return array(
     //Controller/TrelloJSON2KanboardController.php
     'Please select a JSON file.' => 'Por favor, selecione o arquivo JSON.',
     'Unable to parse JSON file. Error: %s' => 'Incapaz de analisar o arquivo json. Erro: %s',
+    'Attachment exceeds the upload limit: %s' => 'O anexo excede o limite de upload: %s',
+    'Attachment is just a link: %s' => 'O anexo é apenas um link: %s',
     'Your project have been imported successfully.' => 'Seu projeto foi importado com sucesso.',
     'Unable to import your project.', 'Não é possível importar seu projeto.',
     //Template/json_import/create.php
@@ -16,6 +18,7 @@ return array(
     'Your file must use the JSON format' => 'Seu arquivo deve usar o formato JSON',
     'The JSON file must contain the keys: name, lists, cards, checklists and actions' => 'O arquivo JSON deve conter as chaves: name, lists, cards, checklists e actions',
     'If there is an internet connection the attachments will be downloaded automatically' => 'Se houver conexão com a internet os anexos serão baixados automaticamente',
+    'If the attachment exceeds the upload limit, a comment with its link will be created' => 'Se o anexo exceder o limite de upload, um comentário com seu link será criado',
     'Your user will be the author of the imported comments' => 'Seu usuário será o autor dos comentários importados',
     'Your attachments that are links will be imported as comments' => 'Seus anexos que são links serão importados como comentários',
     'Import' => 'Importar',

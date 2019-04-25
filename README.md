@@ -13,6 +13,7 @@ Requirements
 ------------
 
 - Kanboard >= 1.0.35
+- PHP curl Extension
 
 Installation
 ------------

@@ -52,6 +52,8 @@ class TrelloJSON2KanboardController extends BaseController
             } else {
                 $values += array('name' => $jsonObj->name);
 
+                $max_attachment_size = $this->helper->text->phpTobytes(get_upload_max_size());
+
                 //creating the project
                 $project_id = $this->createNewProject($values);
 
@@ -133,30 +135,39 @@ class TrelloJSON2KanboardController extends BaseController
                                 if ($card->badges->attachments > 0 and $this->is_trello_connected()) {
                                     //getting attachments from JSON file
                                     foreach ($card->attachments as $attachment) {
+                                        $values = array(
+                                            'task_id' => $task_id,
+                                            'user_id' => $this->userSession->getId(),
+                                        );
                                         //only get attachments that are uploaded files
                                         if ($attachment->isUpload) {
-                                            //here is the file we are downloading, replace spaces with %20
-                                            $ch = curl_init($attachment->url);
+                                            $attachment_size = $this->retrieve_remote_file_size($attachment->url);
 
-                                            curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+                                            if ($attachment_size < $max_attachment_size) {
+                                                //here is the file we are downloading, replace spaces with %20
+                                                $ch = curl_init($attachment->url);
 
-                                            //return file in variable
-                                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                                            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                                                curl_setopt($ch, CURLOPT_TIMEOUT, 50);
 
-                                            $data = curl_exec($ch); //get curl response
-                                            if ($data !== false) {
-                                                //creating attachment
-                                                $attachment_id = $this->taskFileModel->uploadContent($task_id, $attachment->name, base64_encode($data));
+                                                //return file in variable
+                                                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                                                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+                                                $data = curl_exec($ch); //get curl response
+                                                if ($data !== false) {
+                                                    //creating attachment
+                                                    $attachment_id = $this->taskFileModel->uploadContent($task_id, $attachment->name, base64_encode($data));
+                                                }
+                                                curl_close($ch);
+                                            } else {
+                                                // cant upload attachment, add a comment with attachment link
+                                                $values += array('comment' => t('Attachment exceeds the upload limit: %s', $attachment->url));
+                                                //creating comment
+                                                $comment_id = $this->commentModel->create($values);
                                             }
-                                            curl_close($ch);
                                         } else {
                                             // just an url, add a comment
-                                            $values = array(
-                                                'task_id' => $task_id,
-                                                'user_id' => $this->userSession->getId(),
-                                                'comment' => $attachment->url,
-                                            );
+                                            $values += array('comment' => t('Attachment is just a link: %s', $attachment->url));
                                             //creating comment
                                             $comment_id = $this->commentModel->create($values);
                                         }
@@ -230,5 +241,21 @@ class TrelloJSON2KanboardController extends BaseController
         if ($response) return true;
 
         return false;
+    }
+
+    //retrieve file size without download it
+    private function retrieve_remote_file_size($url)
+    {
+        $ch = curl_init($url);
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($ch, CURLOPT_HEADER, TRUE);
+        curl_setopt($ch, CURLOPT_NOBODY, TRUE);
+
+        $data = curl_exec($ch);
+        $size = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+
+        curl_close($ch);
+        return $size;
     }
 }
