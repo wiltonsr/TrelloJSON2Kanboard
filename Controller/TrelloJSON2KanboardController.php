@@ -41,7 +41,9 @@ class TrelloJSON2KanboardController extends BaseController
         } else {
             $file_content = file_get_contents($filename);
 
-            $file_content = mb_convert_encoding($file_content, 'UTF-8', 'pass');
+            if (!mb_check_encoding($file_content, 'UTF-8')) {
+                $file_content = mb_convert_encoding($file_content, 'UTF-8', 'pass');
+            }
 
             $jsonObj = json_decode($file_content);
 
