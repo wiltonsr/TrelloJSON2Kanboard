@@ -128,7 +128,7 @@ class TrelloJSON2KanboardController extends BaseController
                                     }
                                 }
 
-                                if ($card->badges->attachments > 0) {
+                                if ($card->badges->attachments > 0 and $this->is_trello_connected()) {
                                     //getting attachments from JSON file
                                     foreach ($card->attachments as $attachment) {
                                         //only get attachments that are uploaded files
@@ -202,5 +202,31 @@ class TrelloJSON2KanboardController extends BaseController
         );
         $error = json_last_error();
         return array_key_exists($error, $errors) ? $errors[$error] : 'Unknown error ({$error})';
+    }
+
+    //returns true, if can connect to Trello attachments url, false if not
+    private function is_trello_connected()
+    {
+        static $url = 'https://trello-attachments.s3.amazonaws.com';
+
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return false;
+        }
+
+        //initialize curl
+        $curlInit = curl_init($url);
+        curl_setopt($curlInit, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($curlInit, CURLOPT_HEADER, true);
+        curl_setopt($curlInit, CURLOPT_NOBODY, true);
+        curl_setopt($curlInit, CURLOPT_RETURNTRANSFER, true);
+
+        //get answer
+        $response = curl_exec($curlInit);
+
+        curl_close($curlInit);
+
+        if ($response) return true;
+
+        return false;
     }
 }

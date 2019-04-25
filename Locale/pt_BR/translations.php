@@ -15,6 +15,7 @@ return array(
     'Observations' => 'Observações',
     'Your file must use the JSON format' => 'Seu arquivo deve usar o formato JSON',
     'The JSON file must contain the keys: name, lists, cards, checklists and actions' => 'O arquivo JSON deve conter as chaves: name, lists, cards, checklists e actions',
+    'If there is an internet connection the attachments will be downloaded automatically' => 'Se houver conexão com a internet os anexos serão baixados automaticamente',
     'Your user will be the author of the imported comments' => 'Seu usuário será o autor dos comentários importados',
     'Your attachments that are links will be imported as comments' => 'Seus anexos que são links serão importados como comentários',
     'Import' => 'Importar',
