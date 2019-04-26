@@ -29,6 +29,7 @@ class TrelloJSON2KanboardController extends BaseController
      */
     public function save()
     {
+        $this->logger->info("Initing import");
         $values = $this->request->getValues() + array('is_private' => 1);
         $filename = $this->request->getFilePath('file');
 
@@ -72,6 +73,7 @@ class TrelloJSON2KanboardController extends BaseController
                         }
                         //creating column
                         $column_id = $this->columnModel->create($project_id, $list->name, 0, '', 0);
+                        $this->logger->info("Creating column $list->name");
 
                         //getting tasks from JSON file
                         foreach ($jsonObj->cards as $card) {
@@ -93,6 +95,7 @@ class TrelloJSON2KanboardController extends BaseController
                                 );
                                 //creating task
                                 $task_id = $this->taskCreationModel->create($values);
+                                $this->logger->info("Creating card $card->name");
 
                                 if ($card->badges->checkItems > 0) {
                                     //getting checklists from JSON file
@@ -108,6 +111,7 @@ class TrelloJSON2KanboardController extends BaseController
                                                 );
                                                 //creating subtask
                                                 $subtask_id = $this->subtaskModel->create($values);
+                                                $this->logger->info("Creating subtask $checkitem->name");
                                             }
                                         }
                                     }
@@ -127,6 +131,7 @@ class TrelloJSON2KanboardController extends BaseController
                                                 );
                                                 //creating comment
                                                 $comment_id = $this->commentModel->create($values);
+                                                $this->logger->info("Creating comment $values->comment");
                                             }
                                         }
                                     }
@@ -171,6 +176,7 @@ class TrelloJSON2KanboardController extends BaseController
                                             //creating comment
                                             $comment_id = $this->commentModel->create($values);
                                         }
+                                        $this->logger->info("Creating attachment $attachment->url");
                                     }
                                 }
                             }
@@ -179,6 +185,7 @@ class TrelloJSON2KanboardController extends BaseController
 
                     $this->flash->success(t('Your project have been imported successfully.'));
                     return $this->response->redirect($this->helper->url->to('ProjectViewController', 'show', array('project_id' => $project_id)));
+                    $this->logger->info("Your project have been imported successfully.");
                 }
 
                 $this->flash->failure(t('Unable to import your project.'));
