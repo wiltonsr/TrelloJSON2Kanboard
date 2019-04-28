@@ -25,46 +25,98 @@ class TrelloJSON2KanboardModel extends Base
             //creating column
             $column = new Column($list->name, $list->id);
             array_push($project->columns, $column);
+        }
 
-            foreach ($jsonObj->cards as $card) {
-                if ($card->closed) {
-                    //ignore archived lists
-                    continue;
-                }
-                if ($card->idList == $column->trello_id) {
-                    $due_date = $card->due !== null ? date('Y-m-d H:i', strtotime($card->due)) : null;
-                    $task = new Task($card->name, $card->id, $card->idList, $due_date, $card->desc);
-                    array_push($column->tasks, $task);
+        foreach ($jsonObj->cards as $card) {
+            if ($card->closed) {
+                //ignore archived lists
+                continue;
+            }
+            $due_date = $card->due !== null ? date('Y-m-d H:i', strtotime($card->due)) : null;
+            $task = new Task($card->name, $card->id, $due_date, $card->desc);
+            $column_id = $this->card_column_id($project->columns, $card->idList);
+            if (!is_null($column_id)) {
+                array_push($project->columns[$column_id]->tasks, $task);
+            }
 
-                    //getting checklists from JSON file
-                    foreach ($jsonObj->checklists as $checklist) {
-                        if ($checklist->idCard == $card->id) {
-                            foreach ($checklist->checkItems as $checkitem) {
-                                $status = $checkitem->state == 'complete' ? 2 : 0;
-                                //creating subtask
-                                $subtask = new Subtask($checkitem->name, $status);
-                                array_push($task->subtasks, $subtask);
-                            }
-                        }
-                    }
-
-                    //getting actions from JSON file
-                    foreach ($jsonObj->actions as $action) {
-                        //only get actions from commentCard type
-                        if ($action->type == 'commentCard') {
-                            //only get comments that belongs to this card
-                            if ($action->data->card->id == $task->trello_id) {
-                                $comment = new Comment($action->data->text);
-                                array_push($task->comments, $comment);
-                            }
-                        }
+            if ($card->badges->attachments > 0) {
+                foreach ($card->attachments as $att) {
+                    //only get attachments that are uploaded files
+                    if ($att->isUpload) {
+                        $attachment = new Attachment($att->name, $att->url);
+                        array_push($task->attachments, $attachment);
+                    } else {
+                        // just an url, add a comment
+                        $comment = new Comment(t('Attachment is just a link: %s', $att->url));
+                        array_push($task->comments, $comment);
                     }
                 }
             }
         }
 
+        //getting actions from JSON file
+        foreach ($jsonObj->actions as $action) {
+            //only get actions from commentCard type
+            if ($action->type == 'commentCard') {
+                //only get comments that belongs to this card
+                $values = $this->comment_card_id($project->columns, $action->data->card->id);
+                $comment = new Comment($action->data->text);
+                if (!is_null($values)) {
+                    array_push($project->columns[$values['column_key']]->tasks[$values['task_key']]->comments, $comment);
+                }
+            }
+        }
+
+        foreach ($jsonObj->checklists as $checklist) {
+            //only get checklists that belongs to this card
+            $values = $this->checkitem_card_id($project->columns, $checklist->idCard);
+            if (!is_null($values)) {
+                foreach ($checklist->checkItems as $checkitem) {
+                    $status = $checkitem->state == 'complete' ? 2 : 0;
+                    $subtask = new Subtask($checkitem->name, $status);
+                    array_push($project->columns[$values['column_key']]->tasks[$values['task_key']]->subtasks, $subtask);
+                }
+            }
+        }
 
         return $project;
+    }
+
+    public function card_column_id($columns, $value)
+    {
+        foreach ($columns as $task_key => $card) {
+            if ($card->trello_id == $value) {
+                return $task_key;
+            }
+        }
+    }
+
+    public function comment_card_id($columns, $value)
+    {
+        foreach ($columns as $column_key => $column) {
+            foreach ($column->tasks as $task_key => $task) {
+                if ($task->trello_id == $value) {
+                    return array(
+                        'column_key' => $column_key,
+                        'task_key' => $task_key,
+                    );
+                }
+            }
+        }
+    }
+
+    public function checkitem_card_id($columns, $value)
+    {
+        foreach ($columns as $column_key => $column) {
+            foreach ($column->tasks as $task_key => $task) {
+                if ($task->trello_id == $value) {
+                    return array(
+                        'column_key' => $column_key,
+                        'task_key' => $task_key,
+                    );
+                }
+            }
+        }
     }
 }
 
@@ -83,12 +135,14 @@ class Column
 {
     var $name;
     var $trello_id;
+    var $kanboard_id;
     var $tasks = array();
 
-    function __construct($name, $trello_id)
+    function __construct($name, $trello_id, $kanboard_id = null)
     {
         $this->name = $name;
         $this->trello_id = $trello_id;
+        $this->kanboard_id = $kanboard_id;
     }
 }
 
@@ -96,17 +150,16 @@ class Task
 {
     var $name;
     var $trello_id;
-    var $trello_column_id;
     var $date_due;
     var $desc;
     var $subtasks = array();
     var $comments = array();
+    var $attachments = array();
 
-    function __construct($name, $trello_id, $trello_column_id, $date_due, $desc)
+    function __construct($name, $trello_id, $date_due, $desc)
     {
         $this->name = $name;
         $this->trello_id = $trello_id;
-        $this->trello_column_id = $trello_column_id;
         $this->date_due = $date_due;
         $this->desc = $desc;
     }
@@ -131,5 +184,17 @@ class Comment
     function __construct($content)
     {
         $this->content = $content;
+    }
+}
+
+class Attachment
+{
+    var $filename;
+    var $url;
+
+    function __construct($filename, $url)
+    {
+        $this->filename = $filename;
+        $this->url = $url;
     }
 }

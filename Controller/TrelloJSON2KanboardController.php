@@ -66,14 +66,11 @@ class TrelloJSON2KanboardController extends BaseController
                         $this->columnModel->remove($column['id']);
                     }
 
-                    //getting columns from JSON file
                     foreach ($project->columns as $column) {
                         //creating column
                         $column_id = $this->columnModel->create($project_id, $column->name, 0, '', 0);
 
-                        //getting tasks from JSON file
                         foreach ($column->tasks as $task) {
-                            //only get cards that belongs to this column
                             $values = array(
                                 'title' => $task->name,
                                 'project_id' => $project_id,
@@ -84,7 +81,6 @@ class TrelloJSON2KanboardController extends BaseController
                             //creating task
                             $task_id = $this->taskCreationModel->create($values);
 
-                            //getting checklists from JSON file
                             foreach ($task->subtasks as $subtask) {
                                 $values = array(
                                     'title' => $subtask->content,
@@ -96,7 +92,6 @@ class TrelloJSON2KanboardController extends BaseController
                             }
 
                             foreach ($task->comments as $comment) {
-                                //only get actions from commentCard type
                                 $values = array(
                                     'task_id' => $task_id,
                                     'user_id' => $this->userSession->getId(),
@@ -104,6 +99,36 @@ class TrelloJSON2KanboardController extends BaseController
                                 );
                                 //creating comment
                                 $comment_id = $this->commentModel->create($values);
+                            }
+
+                            if (sizeof($task->attachments) > 0 and $this->is_trello_connected()) {
+                                foreach ($task->attachments as $attachment) {
+                                    $values = array(
+                                        'task_id' => $task_id,
+                                        'user_id' => $this->userSession->getId(),
+                                    );
+                                    //only get attachments that are uploaded files
+                                    $attachment_size = $this->retrieve_remote_file_size($attachment->url);
+                                    if ($attachment_size < $max_attachment_size) {
+                                        //here is the file we are downloading, replace spaces with %20
+                                        $ch = curl_init($attachment->url);
+                                        curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+                                        //return file in variable
+                                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                                        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                                        $data = curl_exec($ch); //get curl response
+                                        if ($data !== false) {
+                                            //creating attachment
+                                            $attachment_id = $this->taskFileModel->uploadContent($task_id, $attachment->filename, base64_encode($data));
+                                        }
+                                        curl_close($ch);
+                                    } else {
+                                        // cant upload attachment, add a comment with attachment link
+                                        $values += array('comment' => t('Attachment exceeds the upload limit: %s', $attachment->url));
+                                        //creating comment
+                                        $comment_id = $this->commentModel->create($values);
+                                    }
+                                }
                             }
                         }
                     }
