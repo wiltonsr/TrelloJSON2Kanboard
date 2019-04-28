@@ -135,14 +135,12 @@ class Column
 {
     var $name;
     var $trello_id;
-    var $kanboard_id;
     var $tasks = array();
 
-    function __construct($name, $trello_id, $kanboard_id = null)
+    function __construct($name, $trello_id)
     {
         $this->name = $name;
         $this->trello_id = $trello_id;
-        $this->kanboard_id = $kanboard_id;
     }
 }
 
