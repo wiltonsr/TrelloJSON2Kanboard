@@ -53,7 +53,9 @@ class TrelloJSON2KanboardController extends BaseController
             } else {
                 $project = $this->trelloJSON2KanboardModel->parserJSON($jsonObj);
 
-                $values += array('name' => $project->name);
+                $values += array(
+                    'name' => $project->name,
+                );
 
                 $max_attachment_size = $this->helper->text->phpTobytes(get_upload_max_size());
 
@@ -155,6 +157,7 @@ class TrelloJSON2KanboardController extends BaseController
         $project = array(
             'name' => $values['name'],
             'is_private' => $values['is_private'],
+            'is_trello_imported' => 1,
         );
 
         return $this->projectModel->create($project, $this->userSession->getId(), true);
