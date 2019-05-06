@@ -21,6 +21,7 @@ class TrelloJSON2KanboardController extends BaseController
             'values' => $values,
             'errors' => $errors,
             'max_size' => get_upload_max_size(),
+            'trello_connection' => $this->is_trello_connected(),
         )));
     }
 
