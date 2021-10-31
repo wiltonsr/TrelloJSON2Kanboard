@@ -32,7 +32,7 @@ Note: Plugin folder is case-sensitive.
 
 When the plugin is installed, the option "Import Trello JSON" appears on the top menu of the main Kanboard dashboard:
 
-![Import Trello JSON](https://multimedia.cx/trello2kanboard/import.png)
+![Import Trello JSON](images/import.png)
 
 Exporting JSON Data From Trello
 -------------------------------
@@ -41,22 +41,22 @@ Each Trello board needs to be exported individually. These screenshots illustrat
 
 First, open a board and click the "... Show menu" button:
 
-![Trello - Show Menu](https://multimedia.cx/trello2kanboard/1-trello.png)
+![Trello - Show Menu](images/1-trello.png)
 
 On the menu, expand the "... More" option:
 
-![Trello - Menu - More](https://multimedia.cx/trello2kanboard/2-trello.png)
+![Trello - Menu - More](images/2-trello.png)
 
 Select the option to "Print and export":
 
-![Trello - Print and export](https://multimedia.cx/trello2kanboard/3-trello.png)
+![Trello - Print and export](images/3-trello.png)
 
 From the "Print and export" menu, select the option to "Export as JSON":
 
-![Trello - Export as JSON](https://multimedia.cx/trello2kanboard/4-trello.png)
+![Trello - Export as JSON](images/4-trello.png)
 
 This will deliver a raw JSON dump via the web browser. Right click in the browser and select "Save as..." in order to download from a file:
 
-![Trello - Export JSON - Save as](https://multimedia.cx/trello2kanboard/5-trello.png)
+![Trello - Export JSON - Save as](images/5-trello.png)
 
 After downloading this JSON file, use the new "Import Trello JSON" option on the main Kanboard dashboard to import the Trello board.
