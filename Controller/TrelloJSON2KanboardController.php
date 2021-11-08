@@ -104,7 +104,7 @@ class TrelloJSON2KanboardController extends BaseController
                                 $comment_id = $this->commentModel->create($values);
                             }
 
-                            if (sizeof($task->attachments) > 0 and $this->is_trello_connected()) {
+                            if (sizeof($task->attachments) > 0 && $this->is_trello_connected()) {
                                 foreach ($task->attachments as $attachment) {
                                     $values = array(
                                         'task_id' => $task_id,
@@ -119,10 +119,21 @@ class TrelloJSON2KanboardController extends BaseController
                                         //return file in variable
                                         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                                         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                                        curl_setopt($ch, CURLINFO_HEADER_OUT, true);
                                         $data = curl_exec($ch); //get curl response
-                                        if ($data !== false) {
+                                        $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE); //get curl response http status code
+                                        /*
+                                         *TODO: add support for download attachments from Trello
+                                         *      currently file download requests return 401
+                                        */
+                                        if ($data !== false && ($status_code>=200 && $status_code<300)) {
                                             //creating attachment
                                             $attachment_id = $this->taskFileModel->uploadContent($task_id, $attachment->filename, base64_encode($data));
+                                        } else {
+                                            // cant upload attachment, add a comment with infos
+                                            $values += array('comment' => t('Cant Download Attachment: %s Link: %s Http Response Status Code: %d', $attachment->filename, $attachment->url, $status_code));
+                                            //creating comment
+                                            $comment_id = $this->commentModel->create($values);
                                         }
                                         curl_close($ch);
                                     } else {
@@ -198,7 +209,9 @@ class TrelloJSON2KanboardController extends BaseController
 
         curl_close($curlInit);
 
-        if ($response) return true;
+        if ($response) {
+            return true;
+        }
 
         return false;
     }

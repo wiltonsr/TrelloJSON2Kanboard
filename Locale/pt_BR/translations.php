@@ -5,6 +5,7 @@ return array(
     'Please select a JSON file.' => 'Por favor, selecione o arquivo JSON.',
     'Unable to parse JSON file. Error: %s' => 'Incapaz de analisar o arquivo json. Erro: %s',
     'Attachment exceeds the upload limit: %s' => 'O anexo excede o limite de upload: %s',
+    'Cant Download Attachment: %s Link: %s Http Response Status Code: %d Reason: %s' => 'Não foi possível realizar o Download do Anexo: %s Link: %s Código de Resposta Http: %d Motivo: %s',
     'Attachment is just a link: %s' => 'O anexo é apenas um link: %s',
     'Your project have been imported successfully.' => 'Seu projeto foi importado com sucesso.',
     'Unable to import your project.', 'Não é possível importar seu projeto.',
