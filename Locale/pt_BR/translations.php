@@ -26,5 +26,7 @@ return array(
     'Import' => 'Importar',
     //Template/dashboard/menu.php
     'Import Trello JSON' => 'Importar JSON do Trello',
+    //Template/header/imported.php
+    'Trello Imported Projects management' => 'Gestão de Projetos Importados do Trello',
     '' => '',
 );
