@@ -57,7 +57,10 @@ class TrelloJSON2KanboardController extends BaseController
                     'name' => $project->name,
                 );
 
-                $max_attachment_size = $this->helper->text->phpTobytes(get_upload_max_size());
+                $max_attachment_size = get_upload_max_size();
+                if (is_string($max_attachment_size)) { // Compatibility with Kanboard <= v1.2.26
+                    $max_attachment_size = $this->helper->text->phpTobytes($max_attachment_size);
+                }
 
                 //creating the project
                 $project_id = $this->createNewProject($values);
