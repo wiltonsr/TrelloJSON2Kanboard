@@ -200,6 +200,10 @@ class TrelloJSON2KanboardController extends BaseController
             return false;
         }
 
+        if (!function_exists('curl_version')) {
+            return false;
+        }
+
         //initialize curl
         $curlInit = curl_init($url);
         curl_setopt($curlInit, CURLOPT_CONNECTTIMEOUT, 10);
