@@ -20,6 +20,11 @@ Requirements
 - Kanboard >= 1.0.35
 - PHP curl Extension (**Optional**, necessary to import attachments)
 
+TODO
+------------
+
+ - [ ] Add support to download attachments
+
 Installation
 ------------
 
